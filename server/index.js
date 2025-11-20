@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 const port = process.env.PORT || 5000;
@@ -100,12 +100,13 @@ async function run() {
         mode: "payment",
         metadata: {
           parcelId: paymentInfo.parcelId,
+          // parcelName: paymentInfo.parcelName
         },
         customer_email: paymentInfo.senderEmail,
         success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
       });
-
+// console.log(session.url)
       res.send({ url: session.url });
     });
 
@@ -137,7 +138,7 @@ async function run() {
         cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
       });
 
-      console.log(session);
+      
       res.send({ url: session.url });
     });
 
@@ -146,7 +147,7 @@ async function run() {
 
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-      console.log("session retrieve", session);
+      // console.log("session retrieve", session);
       const trackingId = generateTrackingId();
 
       if (session.payment_status === "paid") {
@@ -171,7 +172,7 @@ async function run() {
           paymentStatus: session.payment_status,
           paidAt: new Date(),
         };
-
+console.log(payment);
         if (session.payment_status === "paid") {
           const resultPayment = await paymentCollection.insertOne(payment);
 
